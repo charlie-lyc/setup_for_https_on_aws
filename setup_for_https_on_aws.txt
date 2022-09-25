@@ -1,0 +1,34 @@
+# Setting frontend and backend for HTTPS on Amazon Web Services 
+
+
+## Fontend
+
+                                    {Certificate Manager(SSL)}
+                                            |                |
+                                            |                v
+                                            |            Domain
+                                            |                |
+                                            v               v
+{Simple Storage Service} -> {CloudFront} -> {Route53} => HTTPS
+
+
+## Backend
+
+                                                                                            {Certificate Manager(SSL) }
+                                                                                                 |                |
+            all traffic anywhere                    	     all traffic anywhere         |               v
+            <outbound>                           	     <outbound>                |             Domain
+        [security group]                        	[security group]                 |                |
+                |                                       	         |                           v               v
+{   Relational Database Service     } -> {      Elatstic Cloud Compute      } -> {Elatstic Load Balancing} -> {Route53} => HTTPS
+                |                                       	         |                                            |
+        [security group]                        	[security group]                                  |
+            <inbound>                               	    <inbound>                                    |
+            MYSQL/Aurora 3306 anywhere              SSH 22 anywhere                             |
+                                                                custom TCP 3001 anywhere(delete later)|
+                                                                      |            ___________________________|_____________________________________________________
+                                                                      |           | [security group] [   Application Load Balancer   ] [security group]            |
+                                                                      |           |   <outbound>      <target>    <rules>  <listener>      <inbound>           |
+                                                                 all traffic ----|--- all traffic --- HTTP 3001 (--)------ HTTP 80     custom TCP 80 anywhere |
+                                                                                  |                        \_________|_____ HTTPS 443   custom TCP 443 anywhere |
+                                                                                  |_________________________________________________________________________________|
